@@ -1,0 +1,40 @@
+﻿@inherits LayoutComponentBase
+
+<div class="main-layout">
+    <header>
+        <h1>Portfolio Dashboard</h1>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/portfolio-dashboard">Portfolio Dashboard</a>
+        </nav>
+    </header>
+    <main>
+        @Body
+    </main>
+</div>
+
+<style>
+    .main-layout {
+        font-family: Arial, sans-serif;
+    }
+
+    header {
+        background-color: #0078d4;
+        color: white;
+        padding: 1rem;
+    }
+
+    nav a {
+        margin-right: 1rem;
+        color: white;
+        text-decoration: none;
+    }
+
+    nav a:hover {
+        text-decoration: underline;
+    }
+
+    main {
+        padding: 1rem;
+    }
+</style>

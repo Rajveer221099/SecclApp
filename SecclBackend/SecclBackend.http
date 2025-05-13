@@ -1,0 +1,9 @@
+@SecclBackend_HostAddress = http://localhost:5086
+
+### Get Clients
+GET {{SecclBackend_HostAddress}}/api/portfolio/clients
+Accept: application/json
+
+### Get Portfolio Summary for a Client
+GET {{SecclBackend_HostAddress}}/api/portfolio/summary/C069J8P
+Accept: application/json
