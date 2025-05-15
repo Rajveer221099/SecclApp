@@ -15,5 +15,5 @@ Before cloning and running the project, ensure you have the following installed:
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/SecclBackend.git
+git clone https://github.com/your-username/SecclApp.git
 cd SecclBackend
