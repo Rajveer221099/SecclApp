@@ -15,6 +15,7 @@ namespace SecclBackend.Controllers
             _secclApiService = secclApiService;
         }
 
+        //Get all clinets
         [HttpGet("clients")]
         public async Task<IActionResult> GetClients()
         {
@@ -23,6 +24,7 @@ namespace SecclBackend.Controllers
             return Ok(clients);
         }
 
+        //Get client specific portfolio data
         [HttpGet("summary/{clientId}")]
         public async Task<IActionResult> GetPortfolioSummary(string clientId)
         {
@@ -34,13 +36,10 @@ namespace SecclBackend.Controllers
                 return NotFound("Portfolio data not found for the specified client.");
             }
 
-            // Log the JSON response for debugging
-            //Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(portfolioData));
-
-            return Ok(portfolioData.First()); // Return the first portfolio if only one is expected
+            return Ok(portfolioData.First()); // Return the portfolio
         }
 
-        // New API to get aggregated total value of three portfolios
+        //Get aggregated total value of three portfolios
         [HttpGet("aggregated-total")]
         public async Task<IActionResult> GetAggregatedTotalValue([FromQuery] string clientIds)
         {
@@ -66,7 +65,7 @@ namespace SecclBackend.Controllers
             return Ok(new { TotalValue = totalValue });
         }
 
-        // New API to get aggregated totals by account types
+        //Get aggregated totals by account types
         [HttpGet("aggregated-by-account-type")]
         public async Task<IActionResult> GetAggregatedByAccountType([FromQuery] string clientIds)
         {
