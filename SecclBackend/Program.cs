@@ -5,6 +5,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 // Add HttpClient Service  
 builder.Services.AddHttpClient<SecclApiService>();
+builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -15,11 +16,13 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins("https://localhost:7115")
               .AllowAnyMethod()
               .AllowAnyHeader();
     });
 });
+
+builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 

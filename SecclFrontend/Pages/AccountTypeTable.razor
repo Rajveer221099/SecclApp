@@ -1,0 +1,47 @@
+@using System.Collections.Generic
+
+<div class="card account-type-card shadow-sm mx-auto animated-fadein" style="max-width: 600px;">
+    <div class="card-body p-0">
+        <table class="table table-hover align-middle mb-0 rounded-table wide-table">
+            <thead class="table-primary text-center fs-5">
+                <tr>
+                    <th style="width:60%">Account Type</th>
+                    <th style="width:40%">Total Value</th>
+                </tr>
+            </thead>
+            <tbody class="text-center fs-5">
+                @if (AggregatedTotals != null && AggregatedTotals.Any())
+                {
+                    @foreach (var accountType in AggregatedTotals)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@accountType.Key</td>
+                            <td class="fw-bold text-primary">@FormatValue(accountType.Value)</td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="2" class="text-muted">No account type data.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    [Parameter] public Dictionary<string, decimal> AggregatedTotals { get; set; }
+    private string FormatValue(decimal value)
+    {
+        if (value >= 1_000_000_000)
+            return $"₹{(value / 1_000_000_000):0.##}B";
+        else if (value >= 1_000_000)
+            return $"₹{(value / 1_000_000):0.##}M";
+        else if (value >= 1_000)
+            return $"₹{(value / 1_000):0.##}K";
+        else
+            return $"₹{value:0.##}";
+    }
+}

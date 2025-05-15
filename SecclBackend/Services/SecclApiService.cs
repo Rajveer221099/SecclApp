@@ -1,30 +1,42 @@
 ﻿using System.Text.Json;
 using System.Net.Http.Headers;
+using SecclShared.Models;
 using SecclBackend.Models;
-using SecclBackend.Models.SecclBackend.Models;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace SecclBackend.Services
 {
     public class SecclApiService
     {
         private readonly HttpClient _httpClient;
+        private readonly IConfiguration _configuration;
+        private readonly IMemoryCache _cache;
+        private string? _cachedToken;
+        private DateTime _tokenExpiry;
 
-        public SecclApiService(HttpClient httpClient)
+        public SecclApiService(HttpClient httpClient, IConfiguration configuration, IMemoryCache cache)
         {
             _httpClient = httpClient;
+            _configuration = configuration;
+            _cache = cache;
         }
 
         // Method to get the API token
         public async Task<string> GetAccessTokenAsync()
         {
+            if (!string.IsNullOrEmpty(_cachedToken) && DateTime.UtcNow < _tokenExpiry)
+            {
+                return _cachedToken;
+            }
+
             var requestBody = new
             {
-                firmId = "P1IMX",
-                id = "nelahi6642@4tmail.net",
-                password = "DemoBDM1"
+                firmId = _configuration["SecclApi:FirmId"],
+                id = _configuration["SecclApi:Username"],
+                password = _configuration["SecclApi:Password"]
             };
 
-            var response = await _httpClient.PostAsJsonAsync("https://pfolio-api-staging.seccl.tech/authenticate", requestBody);
+            var response = await _httpClient.PostAsJsonAsync(_configuration["SecclApi:BaseUrl"] + "/authenticate", requestBody);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -41,17 +53,26 @@ namespace SecclBackend.Services
                 throw new KeyNotFoundException("The 'token' property was not found in the API response.");
             }
 
-            return tokenElement.GetString();
+            _cachedToken = tokenElement.GetString();
+            _tokenExpiry = DateTime.UtcNow.AddMinutes(25); // Set token expiry (adjust as needed)
+
+            return _cachedToken;
         }
 
         // Method to fetch the list of clients
         public async Task<List<Client>> GetClientsAsync(string accessToken)
         {
+            const string cacheKey = "SecclClients";
+            if (_cache.TryGetValue(cacheKey, out List<Client> cachedClients))
+            {
+                return cachedClients;
+            }
+
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
             try
             {
-                var response = await _httpClient.GetAsync("https://pfolio-api-staging.seccl.tech/client/P1IMX?pageSize=100&page=1");
+                var response = await _httpClient.GetAsync(_configuration["SecclApi:BaseUrl"] + "/client/" + _configuration["SecclApi:FirmId"] + "?pageSize=100&page=1");
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -67,13 +88,12 @@ namespace SecclBackend.Services
                     PropertyNameCaseInsensitive = true // Ensure case-insensitive property matching
                 });
 
-                if (clientsResponse?.Data == null)
-                {
-                    Console.WriteLine("No clients found in the response.");
-                    return new List<Client>();
-                }
+                var clients = clientsResponse?.Data ?? new List<Client>();
 
-                return clientsResponse.Data;
+                // Cache for 10 minutes
+                _cache.Set(cacheKey, clients, TimeSpan.FromMinutes(10));
+
+                return clients;
             }
             catch (JsonException ex)
             {
@@ -92,7 +112,7 @@ namespace SecclBackend.Services
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            var response = await _httpClient.GetAsync($"https://pfolio-api-staging.seccl.tech/portfolio/summary/P1IMX/{clientId}");
+            var response = await _httpClient.GetAsync($"{_configuration["SecclApi:BaseUrl"]}/portfolio/summary/{_configuration["SecclApi:FirmId"]}/{clientId}");
             response.EnsureSuccessStatusCode();
 
             var responseData = await response.Content.ReadAsStringAsync();

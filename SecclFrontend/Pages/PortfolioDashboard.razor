@@ -1,230 +1,65 @@
 ﻿@page "/portfolio-dashboard"
+@using SecclShared.Models
+@using SecclFrontend.Pages
+@inject HttpClient Http
+@inject AppState AppState
+
 <link href="css/app.css" rel="stylesheet" />
 
-<div class="dashboard-container">
-    <div class="dashboard-header">
-        <h3>Portfolio Dashboard</h3>
+<div class="container-fluid min-vh-100 d-flex flex-column align-items-center justify-content-center fade-in">
+    <div class="dashboard-header text-center mb-4 w-100 d-flex flex-column align-items-center justify-content-center">
+        <h1 class="display-3 fw-bold text-gradient mb-2">Portfolio Dashboard</h1>
+        <hr class="w-50 mx-auto mb-4" style="border-top: 3px solid #007bff; border-radius: 2px;" />
     </div>
-
-    <div class="input-container">
-        <input type="text" @bind="ClientIdsInput" placeholder="Enter client IDs separated by commas" class="form-control" />
-        <button @onclick="FetchAggregatedData" disabled="@IsLoading" class="btn btn-primary">Fetch Data</button>
-        @if (IsLoading)
+    <div class="dashboard-container w-100 d-flex flex-column align-items-center justify-content-center" style="max-width: 900px;">
+        <div class="input-container mb-4">
+            <input type="text" @bind="ClientIdsInput" placeholder="Enter client IDs separated by commas" class="form-control form-control-lg shadow-sm" />
+            <button @onclick="FetchAggregatedData" disabled="@AppState.IsLoading" class="btn btn-gradient btn-lg d-flex align-items-center gap-2">
+                <span class="bi bi-bar-chart"></span> Fetch Data
+            </button>
+        </div>
+        @if (AppState.IsLoading)
         {
-            <div class="loader"></div>
-        }
-    </div>
-
-    <div class="total-value">
-        <h4>Total Portfolio Value</h4>
-        <p class="value-display">@FormatValue(TotalValue)</p>
-    </div>
-
-    <div class="table-container">
-        <h4>Aggregated Totals by Account Types</h4>
-        <table class="table table-striped">
-            <thead class="thead-dark">
-                <tr>
-                    <th>Account Type</th>
-                    <th>Total Value</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var accountType in AggregatedTotals)
-                {
-                    <tr>
-                        <td>@accountType.Key</td>
-                        <td>@FormatValue(accountType.Value)</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-
-    <div class="client-section">
-        <button class="btn btn-primary" @onclick="ToggleClientList">List All Clients</button>
-        @if (IsClientListVisible)
-        {
-            <div class="client-popup">
-                <div class="popup-header">
-                    <h4>Available Clients</h4>
-                    <button class="btn-close" @onclick="ToggleClientList">&times;</button>
-                </div>
-                <div class="popup-body">
-                    @if (IsLoadingClients)
-                    {
-                        <div class="loader"></div>
-                    }
-                    else if (Clients.Any())
-                    {
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Client ID</th>
-                                    <th>First Name</th>
-                                    <th>Surname</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var client in Clients)
-                                {
-                                    <tr>
-                                        <td>@client.Id</td>
-                                        <td>@client.FirstName</td>
-                                        <td>@client.Surname</td>
-                                        <td>@client.Status</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    }
-                    else
-                    {
-                        <p>No clients found.</p>
-                    }
-                </div>
+            <div class="overlay-loader">
+                <div class="custom-loader"></div>
             </div>
         }
+        <div class="total-value mb-4 animated-fadein">
+            <h4>Total Portfolio Value</h4>
+            <p class="value-display">@FormatValue(AppState.TotalValue)</p>
+        </div>
+        <div class="account-type-card mb-4 animated-fadein">
+            <h4 class="mb-3">Aggregated Totals by Account Types</h4>
+            <AccountTypeTable AggregatedTotals="@AppState.AggregatedTotals" />
+        </div>
+        <div class="client-section mt-4 text-center">
+            <button class="btn btn-outline-primary btn-lg d-flex align-items-center gap-2 mx-auto" @onclick="ToggleClientList" disabled="@AppState.IsLoadingClients">
+                <span class="bi bi-people"></span> List All Clients
+            </button>
+            @if (AppState.IsLoadingClients)
+            {
+                <div class="mt-3 d-flex justify-content-center">
+                    <div class="custom-loader"></div>
+                </div>
+            }
+            @if (AppState.IsClientListVisible)
+            {
+                <div class="client-popup animated-fadein">
+                    <div class="popup-header">
+                        <h4>Available Clients</h4>
+                        <button class="btn-close" @onclick="ToggleClientList">&times;</button>
+                    </div>
+                    <div class="popup-body">
+                        <ClientList Clients="@AppState.Clients" IsLoading="@AppState.IsLoadingClients" />
+                    </div>
+                </div>
+            }
+        </div>
     </div>
 </div>
 
-<style>
-    .dashboard-container {
-        font-family: Arial, sans-serif;
-        max-width: 800px;
-        margin: 20px auto;
-        padding: 20px;
-        background-color: #f9f9f9;
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .dashboard-header {
-        text-align: center;
-        margin-bottom: 20px;
-    }
-
-    .dashboard-header h3 {
-        color: #333;
-    }
-
-    .input-container {
-        display: flex;
-        justify-content: center;
-        margin-bottom: 20px;
-    }
-
-    .input-container input {
-        width: 70%;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        margin-right: 10px;
-    }
-
-    .input-container button {
-        padding: 10px 20px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-
-    .input-container button:disabled {
-        background-color: #ccc;
-        cursor: not-allowed;
-    }
-
-    .loader {
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #007bff;
-        border-radius: 50%;
-        width: 30px;
-        height: 30px;
-        animation: spin 1s linear infinite;
-        margin: 20px auto;
-    }
-
-    .total-value {
-        font-size: 1.2em;
-        font-weight: bold;
-        color: #007bff;
-        text-align: center;
-        margin-top: 20px;
-    }
-
-    .table-container {
-        margin-top: 20px;
-    }
-
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 20px;
-    }
-
-    table th, table td {
-        border: 1px solid #ddd;
-        padding: 8px;
-        text-align: left;
-    }
-
-    table th {
-        background-color: #007bff;
-        color: white;
-    }
-
-    .client-popup {
-        position: fixed;
-        top: 20%;
-        left: 50%;
-        transform: translate(-50%, 0);
-        width: 80%;
-        max-width: 600px;
-        background-color: #fff;
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        z-index: 1000;
-        padding: 20px;
-    }
-
-    .popup-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid #ddd;
-        margin-bottom: 10px;
-    }
-
-    .popup-header h4 {
-        margin: 0;
-    }
-
-    .btn-close {
-        background: none;
-        border: none;
-        font-size: 1.5rem;
-        cursor: pointer;
-    }
-
-    .popup-body {
-        max-height: 400px;
-        overflow-y: auto;
-    }
-</style>
-
-@inject HttpClient Http
-
 @code {
     private string ClientIdsInput = string.Empty;
-    private decimal TotalValue;
-    private Dictionary<string, decimal> AggregatedTotals = new();
-    private bool IsLoading = false;
-    private bool IsClientListVisible = false;
-    private bool IsLoadingClients = false;
-    private List<Client> Clients = new();
 
     private async Task FetchAggregatedData()
     {
@@ -234,19 +69,32 @@
             return;
         }
 
-        IsLoading = true;
-
+        AppState.IsLoading = true;
         var clientIds = ClientIdsInput.Split(',').Select(id => id.Trim()).ToArray();
 
         try
         {
-            var totalResponse = await Http.GetFromJsonAsync<TotalValueResponse>($"api/portfolio/aggregated-total?clientIds={string.Join(",", clientIds)}");
-            if (totalResponse != null)
+            // Use the new batch endpoint for aggregation
+            var response = await Http.PostAsJsonAsync("api/portfolio/batch-aggregated-data", clientIds);
+            if (response.IsSuccessStatusCode)
             {
-                TotalValue = totalResponse.TotalValue;
+                var batchResult = await response.Content.ReadFromJsonAsync<BatchAggregatedDataResult>();
+                if (batchResult != null)
+                {
+                    AppState.TotalValue = batchResult.TotalValue;
+                    AppState.AggregatedTotals = batchResult.AggregatedTotals;
+                }
             }
-
-            AggregatedTotals = await Http.GetFromJsonAsync<Dictionary<string, decimal>>($"api/portfolio/aggregated-by-account-type?clientIds={string.Join(",", clientIds)}");
+            else
+            {
+                // fallback to old endpoints if needed
+                var totalResponse = await Http.GetFromJsonAsync<TotalValueResponse>($"api/portfolio/aggregated-total?clientIds={string.Join(",", clientIds)}");
+                if (totalResponse != null)
+                {
+                    AppState.TotalValue = totalResponse.TotalValue;
+                }
+                AppState.AggregatedTotals = await Http.GetFromJsonAsync<Dictionary<string, decimal>>($"api/portfolio/aggregated-by-account-type?clientIds={string.Join(",", clientIds)}");
+            }
         }
         catch (Exception ex)
         {
@@ -254,21 +102,19 @@
         }
         finally
         {
-            IsLoading = false;
+            AppState.IsLoading = false;
         }
     }
 
     private async Task ToggleClientList()
     {
-        IsClientListVisible = !IsClientListVisible;
-
-        if (IsClientListVisible && !Clients.Any())
+        AppState.IsClientListVisible = !AppState.IsClientListVisible;
+        if (AppState.IsClientListVisible && (AppState.Clients == null || !AppState.Clients.Any()))
         {
-            IsLoadingClients = true;
-
+            AppState.IsLoadingClients = true;
             try
             {
-                Clients = await Http.GetFromJsonAsync<List<Client>>("api/portfolio/clients");
+                AppState.Clients = await Http.GetFromJsonAsync<List<Client>>("api/portfolio/clients");
             }
             catch (Exception ex)
             {
@@ -276,7 +122,7 @@
             }
             finally
             {
-                IsLoadingClients = false;
+                AppState.IsLoadingClients = false;
             }
         }
     }
@@ -306,11 +152,9 @@
         public decimal TotalValue { get; set; }
     }
 
-    public class Client
+    private class BatchAggregatedDataResult
     {
-        public string Id { get; set; }
-        public string FirstName { get; set; }
-        public string Surname { get; set; }
-        public string Status { get; set; }
+        public decimal TotalValue { get; set; }
+        public Dictionary<string, decimal> AggregatedTotals { get; set; }
     }
 }

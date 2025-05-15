@@ -10,4 +10,6 @@ builder.Services.AddScoped(sp => new HttpClient
 {
     BaseAddress = new Uri("https://localhost:44329/") //backend url
 });
+builder.Services.AddScoped<AppState>();
+
 await builder.Build().RunAsync();
