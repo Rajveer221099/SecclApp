@@ -34,13 +34,10 @@ namespace SecclBackend.Controllers
                 return NotFound("Portfolio data not found for the specified client.");
             }
 
-            // Log the JSON response for debugging
-            //Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(portfolioData));
-
             return Ok(portfolioData.First()); // Return the first portfolio if only one is expected
         }
 
-        // New API to get aggregated total value of three portfolios
+        //Get aggregated total value of three portfolios
         [HttpGet("aggregated-total")]
         public async Task<IActionResult> GetAggregatedTotalValue([FromQuery] string clientIds)
         {
