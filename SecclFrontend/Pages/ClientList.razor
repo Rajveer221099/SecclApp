@@ -1,0 +1,73 @@
+@using SecclShared.Models
+@using System.Collections.Generic
+@using Microsoft.AspNetCore.Components
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white fw-bold">
+        Clients
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Client ID</th>
+                    <th>First Name</th>
+                    <th>Surname</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (IsLoading)
+                {
+                    <tr>
+                        <td colspan="4" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status"></div>
+                        </td>
+                    </tr>
+                }
+                else if (Clients != null && Clients.Any())
+                {
+                    @foreach (var client in Clients)
+                    {
+                        <tr>
+                            <td>
+                                <span class="fw-semibold">@client.Id</span>
+                            </td>
+                            <td>
+                                <span class="d-flex align-items-center gap-2">
+                                    <span class="avatar-circle bg-secondary text-white">@client.FirstName?.Substring(0,1)</span>
+                                    @client.FirstName
+                                </span>
+                            </td>
+                            <td>@client.Surname</td>
+                            <td>
+                                <span class="badge @GetStatusBadgeClass(client.Status)">
+                                    @client.Status
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">No clients found.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    [Parameter] public List<Client> Clients { get; set; }
+    [Parameter] public bool IsLoading { get; set; }
+
+    private string GetStatusBadgeClass(string status) => status switch
+    {
+        "Active" => "bg-success",
+        "Pending" => "bg-warning text-dark",
+        "Registered" => "bg-info text-dark",
+        _ => "bg-secondary"
+    };
+}

@@ -11,4 +11,12 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.10" PrivateAssets="all" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SecclShared\SecclShared.csproj" />
+  </ItemGroup>
+
+	<PropertyGroup>
+		<NoWarn>$(NoWarn);NETSDK1082</NoWarn>
+	</PropertyGroup>
+
 </Project>
